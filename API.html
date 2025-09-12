@@ -72,8 +72,9 @@ th.dep, td.dep { width: 180px; }
 .status-cancelled { color:#ff0000; font-weight:bold; animation: blink 0.8s step-start infinite; }
 @keyframes blink { 0%,50%,100% {opacity:1;} 25%,75% {opacity:0;} }
 
+/* Scrolling */
 #scroll-body { flex:1; overflow:hidden; position:relative; }
-#scroll-inner { display:inline-block; will-change:transform; }
+#scroll-inner { display:inline-block; will-change: transform; }
 
 @media (max-width:1024px){
     .header-left h1 { font-size:2em; }
@@ -263,11 +264,10 @@ async function fetchDepartures(){
 function setupScroll(){
     if(departuresBody.children.length===0) return;
     departuresClone.innerHTML = departuresBody.innerHTML;
-    let scrollHeight = scrollInner.scrollHeight/2;
-    let speed = 25;
-    let duration = scrollHeight/speed;
+    const scrollHeight = departuresBody.offsetHeight;
+    const speed = 25; // pixels per second
+    const duration = (scrollHeight*2)/speed; // full loop with clone
     scrollInner.style.animation = `scroll ${duration}s linear infinite`;
-    scrollInner.style.animationName = "scroll";
 }
 
 const styleSheet = document.createElement("style");
@@ -280,6 +280,3 @@ setInterval(fetchDepartures,600000);
 
 </body>
 </html>
-
-
-
