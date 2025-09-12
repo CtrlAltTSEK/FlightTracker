@@ -85,13 +85,16 @@ th.destination, td.destination {
 .status-cancelled { color:#ff0000; font-weight:bold; animation: blink 0.8s step-start infinite; }
 
 @keyframes blink { 0%,50%,100% {opacity:1;} 25%,75% {opacity:0;} }
-#scroll-body { 
-    flex:1; 
-    overflow:hidden; 
-    position:relative; 
+#scroll-body {
+    flex: 1;
+    height: 100%;         /* fills available space */
+    overflow: hidden;     /* ensures clean scroll */
+    position: relative;
 }
-#scroll-inner { 
-    display:block;   /* important: natural stacked height */
+
+#scroll-inner {
+    display: block;
+    min-height: 100%;     /* ensures at least full height */
 }
 
 @keyframes scroll { 0% { transform:translateY(0); } 100% { transform:translateY(-50%); } }
@@ -321,4 +324,5 @@ setInterval(fetchDepartures,600000);
 
 </body>
 </html>
+
 
