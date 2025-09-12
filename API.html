@@ -5,6 +5,15 @@
 <title>OR Tambo – International Departures</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
+/* --- Scale entire page for Hisense TV --- */
+body {
+    transform: scale(0.9);        /* Shrinks page to 90% for TV fit */
+    transform-origin: top left;   /* Anchor scaling from top-left */
+    width: 111.1%;                /* 100 / 0.9 to maintain full width */
+    height: 111.1%;               /* Optional: match width scaling */
+}
+
+/* --- Existing styles --- */
 body { background:#111; color:#eee; font-family:Arial, sans-serif; margin:0; }
 .header {
     display:flex;
@@ -46,21 +55,21 @@ tbody tr:nth-child(even){ background:#141414; }
 
 /* Column Width Control for TV */
 th:first-child, td:first-child { 
-    width: 100px;        /* Flight column */
+    width: 100px;
     max-width: 120px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 th.airline, td.airline { 
-    width: 210px;        /* Airline column */
+    width: 210px;
     max-width: 210px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 th.destination, td.destination { 
-    width: 400px;        /* Destination column */
+    width: 400px;
     max-width: 400px;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -286,4 +295,5 @@ setInterval(fetchDepartures,600000);
 
 </body>
 </html>
+
 
