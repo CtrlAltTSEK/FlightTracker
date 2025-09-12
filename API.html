@@ -174,9 +174,6 @@ function getAirlineName(iata){
   return airlineMap[(iata||"").toUpperCase()] || iata || "";
 }
 
-// Usage in fetchDepartures():
-// const airlineName = getAirlineName(f.airline_iata);
-
 // --- South African Airports ---
 const saAirports = [
   "JNB", "CPT", "DUR", "MQP", "UTN", "PLZ", "BFN", "GRJ", "ELS", "PTG",
@@ -280,3 +277,4 @@ setInterval(fetchDepartures,600000);
 
 </body>
 </html>
+
