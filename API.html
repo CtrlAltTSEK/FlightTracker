@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>OR Tambo – International Departures</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: #111;
+  color: #eee;
+  font-family: Arial, sans-serif;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  background: #222;
+  height: 12%;
+  min-height: 80px;
+  max-height: 120px;
+  box-sizing: border-box;
+}
+.header-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.header-logo {
+  height: 80%;
+  width: auto;
+}
+.header-left h1 {
+  margin: 0;
+  font-size: clamp(1.5rem, 2vw, 2.5rem);
+  text-align: center;
+}
+#liveWeather {
+  font-size: clamp(0.9rem, 1.2vw, 1.3rem);
+  font-weight: bold;
+  padding: 5px 10px;
+  background: rgba(30,30,30,0.8);
+  border-radius: 5px;
+}
+
+/* Table wrapper fills remaining screen */
+.table-wrapper {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+thead th {
+  position: sticky;
+  top: 0;
+  background: #000;
+  z-index: 2;
+  padding: 0.5em;
+  text-align: left;
+  border-bottom: 2px solid #2b2b2b;
+  font-size: clamp(0.9rem, 1vw, 1.2rem);
+}
+
+tbody {
+  display: block;
+  width: 100%;
+}
+
+tbody tr {
+  display: table;
+  width: 100%;
+  table-layout: fixed;
+}
+
+tbody td {
+  padding: 0.5em;
+  border-bottom: 1px solid #2b2b2b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: clamp(0.8rem, 0.9vw, 1.1rem);
+}
+tbody tr:nth-child(even) {
+  background: #141414;
+}
+
+/* Column widths */
+th:first-child, td:first-child { width: 8%; }
+th.airline, td.airline { width: 20%; }
+th.destination, td.destination { width: 25%; }
+tbody tr { height: 50px; }
+
+/* Flight status colors */
+.status-scheduled { color: #5DE2E7 !important; font-weight: bold; }
+.status-enroute   { color: #0f0 !important; font-weight: bold; }
+.status-departed  { color: #888 !important; font-weight: bold; }
+.status-delayed   { color: #f00 !important; font-weight: bold; }
+
+/* Scroll animation */
+#scroll-inner {
+  display: block;
+  position: absolute;
+  top: 0;
+  width: 100%;
+}
+@keyframes scroll {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <img class="header-logo" src="https://cdn.freebiesupply.com/logos/large/2x/marriott-logo-png-transparent.png" alt="Marriott Logo">
+  <div class="header-left"><h1>OR Tambo International – International Departures</h1></div>
+  <div id="liveWeather">Loading Weather...</div>
+</div>
+
+<div class="table-wrapper">
+  <table>
+    <thead>
+      <tr>
+        <th>Flight</th>
+        <th class="airline">Airline</th>
+        <th class="destination">Destination</th>
+        <th>Departure Date</th>
+        <th>Departure Time</th>
+        <th>Arrival Time</th>
+        <th>Est. Flight Time</th>
+        <th>Flight Status</th>
+      </tr>
+    </thead>
+    <tbody id="departures-body"></tbody>
+  </table>
+  <div id="scroll-inner"></div>
+</div>
+
+<script>
+// -------------------- Constants & Maps --------------------
+const API_KEY = "01565b-cb0559"; // Aviation Edge
+const departuresBody = document.getElementById("departures-body");
+const scrollInner = document.getElementById("scroll-inner");
+// --- South African Airports ---
+const saAirports = [
+  "JNB", "CPT", "DUR", "MQP", "UTN", "PLZ", "BFN", "GRJ", "ELS", "PTG",
+  "RCB", "KIM", "SIS", "SHO", "PZB", "MGH", "HDS", "SZK"
+];
+const airportMap = {
+  "JNB":"O.R. Tambo International Airport","CPT":"Cape Town International Airport","DUR":"King Shaka International Airport",
+  "MQP":"Mmabatho International Airport","UTN":"Upington Airport","PLZ":"Port Elizabeth Airport","BFN":"Bram Fischer International Airport",
+  "GRJ":"George Airport","ELS":"East London Airport","PTG":"Polokwane International Airport","RCB":"Richards Bay Airport",
+  "LHR":"London Heathrow","CDG":"Paris Charles de Gaulle","JFK":"John F. Kennedy International",
+  "DXB":"Dubai International","HND":"Tokyo Haneda","SYD":"Sydney Kingsford Smith","MEL":"Melbourne Airport","FRA":"Frankfurt Airport",
+  "AMS":"Amsterdam Schiphol","SIN":"Singapore Changi","BKK":"Bangkok Suvarnabhumi","HKG":"Hong Kong International",
+  "NRT":"Tokyo Narita","ZNZ":"Zanzibar Abeid Amani Karume International","DOH":"Hamad International Airport","EBB":"Entebbe International Airport",
+  "PER":"Perth Airport","EWR":"Newark Liberty International Airport","ATL":"Hartsfield–Jackson Atlanta International Airport",
+  "DAR":"Dar es Salaam Julius Nyerere International Airport","ADD":"Addis Ababa Bole International Airport",
+  "LAD":"Quatro de Fevereiro Airport","KGL":"Kigali International Airport","HRE":"Robert Gabriel Mugabe International Airport",
+  "GBE":"Sir Seretse Khama International Airport","MPM":"Maputo International Airport","LUN":"Kenneth Kaunda International Airport",
+  "ZRH":"Zurich Airport","RUN":"Roland Garros Airport","NBO":"Jomo Kenyatta International Airport",
+  "FIH":"N’djili Airport","WDH":"Hosea Kutako International Airport","UTT":"Upolu Airport",
+  "SV":"Savannakhet Airport","AT":"Antananarivo Ivato Airport","KIM":"Kimberley Airport",
+  "MSU":"Moshoeshoe I International Airport","SIS":"Sishen Airport","SHO":"King Shaka International Airport",
+  "TET":"Chingozi","AUH":"Zayed Intl.","TNR":"Ivato Intl","SZK":"Skukuza Airport",
+  "BUQ":"Joshua Mqabuko Nkomo International Airport","PZB":"Pietermaritzburg Airport",
+  "VFA":"Victoria Falls Intl.","MRU":"Sir S. Ramgoolam Intl","NLA":"Simon M. Kapwepwe Intl",
+  "FBM":"Luano Intl","WVB":"Walvis Bay Airport","MGH":"Margate Airport","SZX":"Bao'an Intl","HDS":"Hoedspruit",
+  "GRU":"São Paulo–Guarulhos Intl","LOS":"Murtala Muhammed International Airport","IST":"Istanbul Airport","CAI":"Cairo Intl."
+};
+
+const airlineMap = {
+  "AA":"American Airlines","AF":"Air France","AI":"Air India","AY":"Finnair","AZ":"Alitalia",
+  "BA":"British Airways","DL":"Delta Air Lines","EK":"Emirates","ET":"Ethiopian Airlines",
+  "JL":"Japan Airlines","KL":"KLM Royal Dutch Airlines","LH":"Lufthansa","NZ":"Air New Zealand",
+  "QR":"Qatar Airways","SA":"South African Airways","SQ":"Singapore Airlines","TK":"Turkish Airlines",
+  "UA":"United Airlines","FA":"FlySafair","OZ":"Asiana Airlines","VS":"Virgin Atlantic",
+  "VA":"Virgin Australia","CX":"Cathay Pacific","QF":"Qantas Airways","MH":"Malaysia Airlines",
+  "IB":"Iberia","LX":"Swiss International","SN":"Brussels Airlines","FN":"Fastjet",
+  "BP":"Air Botswana","TM":"LAM Mozambique Airlines","ZN":"Airlink","4Z":"Airlink",
+  "6E":"IndiGo","AS":"Alaska Airlines","UR":"Tatarstan Airlines","WS":"WestJet",
+  "MU":"China Eastern Airlines","LA":"LATAM Airlines","PK":"Pakistan International Airlines",
+  "UL":"SriLankan Airlines","KP":"Kapit Airlines","SK":"Scandinavian Airlines","UU":"Asosa Airlines",
+  "KQ":"Kenya Airways","DT":"Dadu Airlines","AC":"Air Canada","JU":"Air Serbia",
+  "RJ":"Royal Jordanian","B6":"JetBlue Airways","WB":"Caribbean Airlines",
+  "HC":"Coconut Island Airlines","5Z":"CemAir","P0":"Proflight Zambia","SV":"Saudia",
+  "GE":"Global Aviation Operations","RN":"Eswatini Air",
+  "CA":"Air China","CU":"Air China","ZH":"Shenzhen Airlines","MS":"EgyptAir",
+  "MK":"Air Mauritius","KU":"Kuwait Airways","EY":"Etihad Airways","GF":"Gulf Air",
+  "H1":"Hahn Air Systems","FJW":"Fly Jambo Wings","A3":"Aegean Airlines","DE":"Condor Flugdienst","AT":"Royal Air Marocco","KE":"Korean Air Lines","TG":"Thai Airways International"
+}; 
+
+function getAirlineName(iata){return airlineMap[(iata||"").toUpperCase()]||iata||"";}
+function formatDuration(min){if(min==null||isNaN(min))return "—"; const h=Math.floor(min/60); const m=Math.floor(min%60); return h>0?`${h}h ${m}m`:`${m}m`;}
+function getStatusClass(depTime, actualTime, delay){const now=new Date(), dep=depTime?new Date(depTime):null, act=actualTime?new Date(actualTime):null; if(!dep) return "scheduled"; if(act && act<=now) return "departed"; if(dep<=now) return delay?"delayed":"enroute"; return "scheduled";}
+
+// -------------------- Weather --------------------
+const lat=-26.1337, lon=28.2420;
+async function fetchWeather(){
+    try{
+        const resp=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+        const data=await resp.json();
+        const temp=Math.round(data.current_weather.temperature);
+        const code=data.current_weather.weathercode;
+        const icons={0:"☀️",1:"🌤️",2:"⛅",3:"☁️",45:"🌫️",48:"🌫️",51:"🌦️",53:"🌦️",55:"🌧️",61:"🌧️",63:"🌧️",65:"🌧️",66:"🌨️",67:"🌨️",71:"❄️",73:"❄️",75:"❄️",80:"🌧️",81:"🌧️",82:"⛈️",95:"⛈️",96:"⛈️",99:"⛈️"};
+        const descs={0:"Clear",1:"Mainly clear",2:"Partly cloudy",3:"Overcast",45:"Fog",48:"Rime fog",51:"Light drizzle",53:"Moderate drizzle",55:"Heavy drizzle",61:"Light rain",63:"Moderate rain",65:"Heavy rain",66:"Light freezing rain",67:"Heavy freezing rain",71:"Light snow",73:"Moderate snow",75:"Heavy snow",80:"Rain showers slight",81:"Moderate",82:"Violent",95:"Thunderstorm",96:"Thunderstorm w/ hail slight",99:"Thunderstorm w/ hail heavy"};
+        const now=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Africa/Johannesburg'});
+        const text=`${icons[code]||"❓"} ${temp}°C, ${descs[code]||"Unknown"} | ${now}`;
+        const weatherEl=document.getElementById("liveWeather");
+        weatherEl.textContent=text;
+        weatherEl.dataset.weatherText=`${icons[code]||"❓"} ${temp}°C, ${descs[code]||"Unknown"}`;
+    }catch(e){ console.error(e); document.getElementById("liveWeather").textContent="Weather unavailable";}
+}
+setInterval(()=>{const now=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false,timeZone:'Africa/Johannesburg'}); const el=document.getElementById("liveWeather"); const t=el.dataset.weatherText||""; el.textContent=`${t} | ${now}`;},1000);
+fetchWeather(); setInterval(fetchWeather,60000);
+
+// -------------------- Departures --------------------
+let lastFlightsJSON = "";
+let scrollSetupDone = false;
+
+async function fetchDepartures() {
+    try {
+        const resp = await fetch(`https://aviation-edge.com/v2/public/timetable?key=${API_KEY}&iataCode=JNB&type=departure`);
+        const flightsRaw = await resp.json();
+        const flights = Array.isArray(flightsRaw)?flightsRaw:(flightsRaw.data||[]);
+
+        const currentFlightsJSON = JSON.stringify(flights);
+        if(currentFlightsJSON===lastFlightsJSON) return;
+        lastFlightsJSON = currentFlightsJSON;
+
+        departuresBody.innerHTML = "";
+        const now = new Date();
+        flights.filter(f=>!saAirports.includes(f.arrival?.iataCode))
+               .filter(f=>{const dep=f.departure?.scheduledTime?new Date(f.departure.scheduledTime):null; return !dep||(now-dep)<=60*60*1000;})
+               .forEach(f=>{
+                    const dep=f.departure||{}, arr=f.arrival||{};
+                    const flightNumber=f.flight?.iata||((f.airline?.iataCode||"")+(f.flight?.number||""))||"—";
+                    const airlineName=getAirlineName(f.airline?.iataCode)||"—";
+                    const destination=airportMap[arr.iataCode]||arr.iataCode||"—";
+                    const statusClass=getStatusClass(dep.scheduledTime, dep.actualTime, dep.delay);
+                    const displayStatus={"scheduled":"Scheduled","departed":"Departed","enroute":"En Route","delayed":"Delayed"}[statusClass]||"Scheduled";
+                    const depDate = dep.scheduledTime?new Date(dep.scheduledTime).toLocaleDateString('en-GB',{weekday:'short',day:'2-digit',month:'short',timeZone:'Africa/Johannesburg'}):"—";
+                    const depTime = dep.scheduledTime?new Date(dep.scheduledTime).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Africa/Johannesburg'}):"—";
+                    const arrTime = arr.scheduledTime?new Date(arr.scheduledTime).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Africa/Johannesburg'}):"—";
+                    let estDuration = "—";
+                    if(dep.scheduledTime && arr.scheduledTime) estDuration=formatDuration((new Date(arr.scheduledTime)-new Date(dep.scheduledTime))/60000);
+
+                    const row = document.createElement("tr");
+                    row.innerHTML = `<td>${flightNumber}</td><td class="airline">${airlineName}</td><td class="destination">${destination}</td><td>${depDate}</td><td>${depTime}</td><td>${arrTime}</td><td>${estDuration}</td><td class="status-${statusClass}">${displayStatus}</td>`;
+                    departuresBody.appendChild(row);
+               });
+        setupScroll();
+    } catch(err){
+        console.error(err);
+        departuresBody.innerHTML=`<tr><td colspan="8" style="text-align:center">Error fetching flight data</td></tr>`;
+    }
+}
+
+function setupScroll() {
+    if(scrollSetupDone || departuresBody.children.length===0) return;
+    scrollSetupDone = true;
+    const clone = departuresBody.cloneNode(true);
+    scrollInner.appendChild(departuresBody);
+    scrollInner.appendChild(clone);
+    const scrollHeight = scrollInner.scrollHeight/2;
+    const speed = 50; // px/s
+    const duration = scrollHeight/speed;
+    scrollInner.style.animation = `scroll ${duration}s linear infinite`;
+}
+
+// Initial fetch + interval
+fetchDepartures();
+setInterval(fetchDepartures, 600000); // 10 min interval
+</script>
+</body>
+</html>
