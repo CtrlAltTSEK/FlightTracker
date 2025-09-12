@@ -5,56 +5,106 @@
 <title>OR Tambo – International Departures</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
-/* --- Scale entire page for Hisense TV --- */
-body {
-    overflow: hidden; /* prevents browser scrollbar */
-    transform: scale(0.9);
-    transform-origin: top left;
-    width: 111.1%;
-    height: 111.1%;
+/* --- TV Scaling & Hide Browser Scrollbar --- */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;       /* hides the browser scroll bar */
 }
 
-/* --- Existing styles --- */
-body { background:#111; color:#eee; font-family:Arial, sans-serif; margin:0; }
+body {
+    background: #111;
+    color: #eee;
+    font-family: Arial, sans-serif;
+    transform: scale(0.9);  /* Shrinks page to 90% for TV fit */
+    transform-origin: top left;
+}
+
+/* --- Header --- */
 .header {
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:10px 20px;
-    background:#222;
-    height:100px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background: #222;
+    height: 100px;
     position: relative;
 }
+
 .header-left {
-    display:flex;
+    display: flex;
     flex-direction: column;
     align-items: center;
-    flex:1;
-    justify-content:center;
-    gap:10px;
+    flex: 1;
+    justify-content: center;
+    gap: 10px;
 }
-.header-logo {
-    position:absolute;
-    left:20px;
-    top:15px;
-    height:70px;
-    width:auto;
-    display:block;
-}
-.header-left h1 {
-    margin:0;
-    font-size:2.5em;
-    text-align:center;
-}
-#liveWeather { font-size:1.2em; font-weight:bold; padding:5px 10px; background:rgba(30,30,30,0.8); border-radius:5px; }
-.table-wrapper { height:calc(100vh - 100px); display:flex; flex-direction:column; }
-table { width:100%; border-collapse:collapse; font-size:18px; table-layout:fixed; }
-thead { background:#000; position:sticky; top:0; z-index:2; }
-thead th { padding:12px 8px; text-align:left; border-bottom:2px solid #2b2b2b; }
-tbody td { padding:12px 8px; border-bottom:1px solid #2b2b2b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-tbody tr:nth-child(even){ background:#141414; }
 
-/* Column Width Control for TV */
+.header-logo {
+    position: absolute;
+    left: 20px;
+    top: 15px;
+    height: 70px;
+    width: auto;
+    display: block;
+}
+
+.header-left h1 {
+    margin: 0;
+    font-size: 2.5em;
+    text-align: center;
+}
+
+#liveWeather {
+    font-size: 1.2em;
+    font-weight: bold;
+    padding: 5px 10px;
+    background: rgba(30,30,30,0.8);
+    border-radius: 5px;
+}
+
+/* --- Table Wrapper & Table --- */
+.table-wrapper {
+    height: calc(100vh - 100px);
+    display: flex;
+    flex-direction: column;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 18px;
+    table-layout: fixed;
+}
+
+thead {
+    background: #000;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+thead th {
+    padding: 12px 8px;
+    text-align: left;
+    border-bottom: 2px solid #2b2b2b;
+}
+
+tbody td {
+    padding: 12px 8px;
+    border-bottom: 1px solid #2b2b2b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+tbody tr:nth-child(even) {
+    background: #141414;
+}
+
+/* --- Column Widths --- */
 th:first-child, td:first-child { 
     width: 100px;
     max-width: 120px;
@@ -62,6 +112,7 @@ th:first-child, td:first-child {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
 th.airline, td.airline { 
     width: 210px;
     max-width: 210px;
@@ -69,6 +120,7 @@ th.airline, td.airline {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
 th.destination, td.destination { 
     width: 400px;
     max-width: 400px;
@@ -77,40 +129,46 @@ th.destination, td.destination {
     white-space: nowrap;
 }
 
-/* Flight Status visibility */
-.status-scheduled { color:#00bfff; font-weight:bold; }
-.status-departed  { color:#32cd32; font-weight:bold; }
-.status-enroute   { color:#ffa500; font-weight:bold; }
-.status-arrived   { color:#32cd32; font-weight:bold; }
-.status-delayed   { color:#ffa500; font-weight:bold; animation: blink 1s step-start infinite; }
-.status-cancelled { color:#ff0000; font-weight:bold; animation: blink 0.8s step-start infinite; }
+/* --- Flight Status --- */
+.status-scheduled { color: #00bfff; font-weight: bold; }
+.status-departed  { color: #32cd32; font-weight: bold; }
+.status-enroute   { color: #ffa500; font-weight: bold; }
+.status-arrived   { color: #32cd32; font-weight: bold; }
+.status-delayed   { color: #ffa500; font-weight: bold; animation: blink 1s step-start infinite; }
+.status-cancelled { color: #ff0000; font-weight: bold; animation: blink 0.8s step-start infinite; }
 
 @keyframes blink { 0%,50%,100% {opacity:1;} 25%,75% {opacity:0;} }
+
+/* --- Scrolling Table --- */
 #scroll-body {
     flex: 1;
-    height: 200%;     /* 👈 ensures it fills the wrapper */
     overflow: hidden;
     position: relative;
 }
 
 #scroll-inner {
     display: block;
-    min-height: 100%;     /* ensures at least full height */
+    min-height: 100%;
 }
 
-@keyframes scroll { 0% { transform:translateY(0); } 100% { transform:translateY(-50%); } }
+@keyframes scroll {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-50%); }
+}
 
+/* --- Responsive --- */
 @media (max-width: 1024px) {
     .header-left { flex-direction: column; gap:10px; height:auto; }
-    .header-left h1 { font-size:2em; text-align:center; }
-    table { font-size:16px; }
-    th.airline, td.airline { max-width:150px; }
-    th.destination, td.destination { max-width:180px; }
+    .header-left h1 { font-size: 2em; text-align:center; }
+    table { font-size: 16px; }
+    th.airline, td.airline { max-width: 150px; }
+    th.destination, td.destination { max-width: 180px; }
 }
+
 @media (max-width: 600px) {
-    .header-left h1 { font-size:1.5em; }
-    table { font-size:14px; }
-    th, td { padding:6px 4px; }
+    .header-left h1 { font-size: 1.5em; }
+    table { font-size: 14px; }
+    th, td { padding: 6px 4px; }
 }
 </style>
 </head>
@@ -325,6 +383,7 @@ setInterval(fetchDepartures,600000);
 
 </body>
 </html>
+
 
 
 
