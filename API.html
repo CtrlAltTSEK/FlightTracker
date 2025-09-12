@@ -173,16 +173,25 @@ const airlineMap = {
   "UA":"United Airlines","FA":"FlySafair","OZ":"Asiana Airlines","VS":"Virgin Atlantic",
   "VA":"Virgin Australia","CX":"Cathay Pacific","QF":"Qantas Airways","MH":"Malaysia Airlines",
   "IB":"Iberia","LX":"Swiss International","SN":"Brussels Airlines","FN":"Fastjet",
-  "BP":"Air Botswana","TM":"LAM Mozambique Airlines","ZN":"Airlink","6E":"IndiGo","AS":"Alaska Airlines",
-  "UR":"Tatarstan Airlines","WS":"WestJet","MU":"China Eastern Airlines","4Z":"South African Airlink",
-  "LA":"LATAM Airlines","PK":"Pakistan International Airlines","UL":"SriLankan Airlines",
-  "KP":"Kapit Airlines","SK":"Scandinavian Airlines","UU":"Asosa Airlines","KQ":"Kenya Airways",
-  "DT":"Dadu Airlines","AC":"Air Canada","JU":"Air Serbia","RJ":"Royal Jordanian","B6":"JetBlue Airways",
-  "WB":"Caribbean Airlines","HC":"Coconut Island Airlines","5Z":"CemAir","P0":"Proflight Zambia",
-  "SV":"Saudia","GE":"Global Aviation Operations","RN":"Eswatini Air",
-  "CA":"Air China","ZH":"Shenzhen Airlines","MS":"EgyptAir","MK":"Air Mauritius","KU":"Kuwait Airways",
-  "EY":"Etihad Airways","GF":"Gulf Air"
+  "BP":"Air Botswana","TM":"LAM Mozambique Airlines","ZN":"Airlink","4Z":"Airlink",
+  "6E":"IndiGo","AS":"Alaska Airlines","UR":"Tatarstan Airlines","WS":"WestJet",
+  "MU":"China Eastern Airlines","LA":"LATAM Airlines","PK":"Pakistan International Airlines",
+  "UL":"SriLankan Airlines","KP":"Kapit Airlines","SK":"Scandinavian Airlines","UU":"Asosa Airlines",
+  "KQ":"Kenya Airways","DT":"Dadu Airlines","AC":"Air Canada","JU":"Air Serbia",
+  "RJ":"Royal Jordanian","B6":"JetBlue Airways","WB":"Caribbean Airlines",
+  "HC":"Coconut Island Airlines","5Z":"CemAir","P0":"Proflight Zambia","SV":"Saudia",
+  "GE":"Global Aviation Operations","RN":"Eswatini Air",
+  "CA":"Air China","CU":"Air China","ZH":"Shenzhen Airlines","MS":"EgyptAir",
+  "MK":"Air Mauritius","KU":"Kuwait Airways","EY":"Etihad Airways","GF":"Gulf Air"
 };
+
+// --- Lookup helper (ensures uppercase matching) ---
+function getAirlineName(iata){
+  return airlineMap[(iata||"").toUpperCase()] || iata || "";
+}
+
+// Usage in fetchDepartures():
+// const airlineName = getAirlineName(f.airline_iata);
 
 // --- South African Airports ---
 const saAirports = [
@@ -303,6 +312,7 @@ setInterval(fetchDepartures,600000);
 
 </body>
 </html>
+
 
 
 
