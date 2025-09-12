@@ -7,10 +7,11 @@
 <style>
 /* --- Scale entire page for Hisense TV --- */
 body {
-    transform: scale(0.9);        /* Shrinks page to 90% for TV fit */
-    transform-origin: top left;   /* Anchor scaling from top-left */
-    width: 111.1%;                /* 100 / 0.9 to maintain full width */
-    height: 111.1%;               /* Optional: match width scaling */
+    overflow: hidden; /* prevents browser scrollbar */
+    transform: scale(0.9);
+    transform-origin: top left;
+    width: 111.1%;
+    height: 111.1%;
 }
 
 /* --- Existing styles --- */
@@ -324,6 +325,7 @@ setInterval(fetchDepartures,600000);
 
 </body>
 </html>
+
 
 
 
