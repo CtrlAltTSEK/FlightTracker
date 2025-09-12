@@ -138,23 +138,10 @@ th.destination, td.destination {
 .status-cancelled { color: #ff0000; font-weight: bold; animation: blink 0.8s step-start infinite; }
 
 @keyframes blink { 0%,50%,100% {opacity:1;} 25%,75% {opacity:0;} }
+#scroll-body { flex:1; overflow:hidden; position:relative; }
+#scroll-inner { display:inline-block; }
 
-/* --- Scrolling Table --- */
-#scroll-body {
-    flex: 1;
-    overflow: hidden;
-    position: relative;
-}
-
-#scroll-inner {
-    display: block;
-    min-height: 100%;
-}
-
-@keyframes scroll {
-    0% { transform: translateY(0); }
-    100% { transform: translateY(-50%); } /* moves by half, because we duplicated rows */
-}
+@keyframes scroll { 0% { transform:translateY(0); } 100% { transform:translateY(-50%); } }
 
 /* --- Responsive --- */
 @media (max-width: 1024px) {
@@ -364,23 +351,12 @@ async function fetchDepartures(){
     } catch(err){ console.error(err); }
 }
 
-function setupScroll() {
-    if (departuresBody.children.length === 0) return;
-
-    // Duplicate rows for smooth looping
+function setupScroll(){
+    if(departuresBody.children.length === 0) return;
     departuresClone.innerHTML = departuresBody.innerHTML;
-
-    // Get the total height of the table content
-    const tableHeight = departuresBody.offsetHeight;
-
-    // Set the inner scroll container height to twice the table
-    scrollInner.style.height = tableHeight * 2 + "px";
-
-    // Calculate animation duration based on scroll speed (px/sec)
-    const speed = 25; // px/sec for readability
-    const duration = tableHeight / speed;
-
-    // Apply the scroll animation
+    const scrollHeight = scrollInner.scrollHeight/2;
+    const speed = 25; // slower scroll for TV readability
+    const duration = scrollHeight / speed;
     scrollInner.style.animation = `scroll ${duration}s linear infinite`;
     scrollInner.dataset.scrolling = "true";
 }
@@ -391,6 +367,7 @@ setInterval(fetchDepartures,600000);
 
 </body>
 </html>
+
 
 
 
