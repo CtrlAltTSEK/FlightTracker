@@ -5,16 +5,16 @@
 <title>OR Tambo – International Departures</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
+/* --- Scale entire page for Hisense TV --- */
 body {
-    transform: scale(0.9);
-    transform-origin: top left;
-    width: 111.1%;
-    height: 111.1%;
-    background:#111;
-    color:#eee;
-    font-family:Arial, sans-serif;
-    margin:0;
+    transform: scale(0.9);        /* Shrinks page to 90% for TV fit */
+    transform-origin: top left;   /* Anchor scaling from top-left */
+    width: 111.1%;                /* 100 / 0.9 to maintain full width */
+    height: 111.1%;               /* Optional: match width scaling */
 }
+
+/* --- Existing styles --- */
+body { background:#111; color:#eee; font-family:Arial, sans-serif; margin:0; }
 .header {
     display:flex;
     justify-content:space-between;
@@ -38,6 +38,7 @@ body {
     top:15px;
     height:70px;
     width:auto;
+    display:block;
 }
 .header-left h1 {
     margin:0;
@@ -45,32 +46,58 @@ body {
     text-align:center;
 }
 #liveWeather { font-size:1.2em; font-weight:bold; padding:5px 10px; background:rgba(30,30,30,0.8); border-radius:5px; }
-.table-wrapper { height:calc(100vh - 100px); display:flex; flex-direction:column; overflow:hidden; }
+.table-wrapper { height:calc(100vh - 100px); display:flex; flex-direction:column; }
 table { width:100%; border-collapse:collapse; font-size:18px; table-layout:fixed; }
 thead { background:#000; position:sticky; top:0; z-index:2; }
 thead th { padding:12px 8px; text-align:left; border-bottom:2px solid #2b2b2b; }
 tbody td { padding:12px 8px; border-bottom:1px solid #2b2b2b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 tbody tr:nth-child(even){ background:#141414; }
-th.flight, td.flight { width:100px; }
-th.airline, td.airline { width:220px; }
-th.destination, td.destination { width:400px; }
-th.dep, td.dep { width:180px; }
+
+/* Column Width Control for TV */
+th:first-child, td:first-child { 
+    width: 100px;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+th.airline, td.airline { 
+    width: 210px;
+    max-width: 210px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+th.destination, td.destination { 
+    width: 400px;
+    max-width: 400px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Flight Status visibility */
 .status-scheduled { color:#00bfff; font-weight:bold; }
 .status-departed  { color:#32cd32; font-weight:bold; }
 .status-enroute   { color:#ffa500; font-weight:bold; }
 .status-arrived   { color:#32cd32; font-weight:bold; }
 .status-delayed   { color:#ffa500; font-weight:bold; animation: blink 1s step-start infinite; }
 .status-cancelled { color:#ff0000; font-weight:bold; animation: blink 0.8s step-start infinite; }
+
 @keyframes blink { 0%,50%,100% {opacity:1;} 25%,75% {opacity:0;} }
 #scroll-body { flex:1; overflow:hidden; position:relative; }
-#scroll-inner { display:inline-block; will-change: transform; }
-@media (max-width:1024px){
-    .header-left h1 { font-size:2em; }
+#scroll-inner { display:inline-block; }
+
+@keyframes scroll { 0% { transform:translateY(0); } 100% { transform:translateY(-50%); } }
+
+@media (max-width: 1024px) {
+    .header-left { flex-direction: column; gap:10px; height:auto; }
+    .header-left h1 { font-size:2em; text-align:center; }
     table { font-size:16px; }
-    th.airline, td.airline { max-width:180px; }
-    th.destination, td.destination { max-width:250px; }
+    th.airline, td.airline { max-width:150px; }
+    th.destination, td.destination { max-width:180px; }
 }
-@media (max-width:600px){
+@media (max-width: 600px) {
     .header-left h1 { font-size:1.5em; }
     table { font-size:14px; }
     th, td { padding:6px 4px; }
@@ -91,13 +118,14 @@ th.dep, td.dep { width:180px; }
   <table>
     <thead>
       <tr>
-        <th class="flight">Flight</th>
+        <th>Flight</th>
         <th class="airline">Airline</th>
         <th class="destination">Destination</th>
-        <th class="dep">Dep Date & Time</th>
-        <th>Arrival</th>
-        <th>Est. Flight</th>
-        <th>Status</th>
+        <th>Departure Date</th>
+        <th>Departure Time</th>
+        <th>Arrival Time</th>
+        <th>Est. Flight Time</th>
+        <th>Flight Status</th>
       </tr>
     </thead>
   </table>
@@ -194,16 +222,33 @@ const departuresBody=document.getElementById("departures-body");
 const departuresClone=document.getElementById("departures-clone");
 const scrollInner=document.getElementById("scroll-inner");
 
-function formatDuration(min){ if(!min||isNaN(min)) return "—"; const h=Math.floor(min/60); const m=Math.floor(min%60); return h>0?`${h}h ${m}m`:`${m}m`; }
-function getStatusClass(f){
-    const now=new Date();
-    const raw=(f.status||"").toLowerCase();
-    if(["cancelled","canceled","cnx","c"].includes(raw)||f.cancelled||f.is_cancelled||(f.flight_status&&f.flight_status.toLowerCase()==="cancelled")||(f.status_iata==="C")) return "cancelled";
-    if(["delayed","d","delay"].includes(raw)||(f.flight_status&&f.flight_status.toLowerCase()==="delayed")||(f.status_iata==="D")) return "delayed";
-    const depTime=f.dep_time?new Date(f.dep_time):null;
-    const arrTime=f.arr_time?new Date(f.arr_time):null;
-    if(arrTime && arrTime<=now) return "arrived";
-    if(depTime && depTime<=now){ const mins=(now-depTime)/60000; return mins<=30?"departed":"enroute"; }
+function formatDuration(min){ if(min==null||isNaN(min)) return "—"; const h=Math.floor(min/60); const m=Math.floor(min%60); return h>0?`${h}h ${m}m`:`${m}m`; }
+
+function getStatusClass(flight){
+    const now = new Date();
+    const rawStatus = (flight.status || "").toLowerCase();
+    const isCancelled = ["cancelled","canceled","cnx","c"].includes(rawStatus)
+                        || flight.cancelled === true
+                        || (flight.is_cancelled === true)
+                        || (flight.flight_status && flight.flight_status.toLowerCase() === "cancelled")
+                        || (flight.status_iata && flight.status_iata.toUpperCase() === "C");
+    if(isCancelled) return "cancelled";
+
+    if(["delayed","d","delay"].includes(rawStatus)
+       || (flight.flight_status && flight.flight_status.toLowerCase() === "delayed")
+       || (flight.status_iata && flight.status_iata.toUpperCase() === "D")) {
+        return "delayed";
+    }
+
+    const depTimeUTC = flight.dep_time ? new Date(flight.dep_time) : null;
+    const arrTimeUTC = flight.arr_time ? new Date(flight.arr_time) : null;
+
+    if(arrTimeUTC && arrTimeUTC <= now) return "arrived";
+    if(depTimeUTC && depTimeUTC <= now){
+        const minutesSinceDeparture = (now - depTimeUTC)/60000;
+        if(minutesSinceDeparture <= 30) return "departed";
+        return "enroute";
+    }
     return "scheduled";
 }
 
@@ -211,43 +256,55 @@ async function fetchDepartures(){
     try{
         const resp = await fetch(`https://airlabs.co/api/v9/schedules?dep_iata=JNB&api_key=${API_KEY}&limit=200`);
         const data = await resp.json();
-        let flights=(data.response||[]).filter(f=>f.arr_iata && !saAirports.includes(f.arr_iata));
-        console.log("Flights fetched:", flights.length);
-        if(flights.length===0){ departuresBody.innerHTML='<tr><td colspan="7" style="text-align:center">No flights available</td></tr>'; departuresClone.innerHTML=''; return; }
+        let flights = (data.response||[]).filter(f=>f.arr_iata);
 
+        flights = flights.filter(f => !saAirports.includes(f.arr_iata));
         flights.sort((a,b)=>new Date(a.dep_time)-new Date(b.dep_time));
+
         departuresBody.innerHTML="";
         flights.forEach(f=>{
-            const row=document.createElement("tr");
-            const depTime=f.dep_time?new Date(f.dep_time):null;
-            const arrTime=f.arr_time?new Date(f.arr_time):null;
-            const depLocal=depTime?depTime.toLocaleString('en-GB',{weekday:'short',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Africa/Johannesburg'}):"—";
-            const arrLocal=arrTime?arrTime.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Africa/Johannesburg'}):"—";
-            const est=formatDuration(depTime&&arrTime?(arrTime-depTime)/60000:null);
-            const airlineName=airlineMap[f.airline_iata]||f.airline_iata||"";
-            const destName=airportMap[f.arr_iata]||f.arr_iata;
-            row.innerHTML=`<td>${f.flight_iata||""}</td>
+            const statusClass = getStatusClass(f);
+            const displayStatus = {"scheduled":"Scheduled","departed":"Departed","enroute":"En Route","arrived":"Arrived","cancelled":"Cancelled","delayed":"Delayed"}[statusClass]||"Scheduled";
+
+            const depTimeUTC = f.dep_time ? new Date(f.dep_time) : null;
+            const arrTimeUTC = f.arr_time ? new Date(f.arr_time) : null;
+
+            const depDate = depTimeUTC ? depTimeUTC.toLocaleDateString('en-GB', { weekday:'short', day:'2-digit', month:'short', timeZone:'Africa/Johannesburg' }) : "—";
+            const depLocal = depTimeUTC ? depTimeUTC.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Africa/Johannesburg'}) : "—";
+            const arrLocal = arrTimeUTC ? arrTimeUTC.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Africa/Johannesburg'}) : "—";
+            const estMins = depTimeUTC && arrTimeUTC ? (arrTimeUTC-depTimeUTC)/60000 : null;
+
+            const airlineName = airlineMap[f.airline_iata] || f.airline_iata || "";
+            const destName = airportMap[f.arr_iata] || f.arr_iata;
+
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td>${f.flight_iata||""}</td>
                 <td class="airline" title="${airlineName}">${airlineName}</td>
                 <td class="destination" title="${destName}">${destName}</td>
-                <td class="dep">${depLocal}</td>
+                <td>${depDate}</td>
+                <td>${depLocal}</td>
                 <td>${arrLocal}</td>
-                <td>${est}</td>
-                <td class="status-${getStatusClass(f)}">${getStatusClass(f)}</td>`;
+                <td>${formatDuration(estMins)}</td>
+                <td class="status-${statusClass}">${displayStatus}</td>
+            `;
             departuresBody.appendChild(row);
         });
 
-        // Clone and setup scroll
-        departuresClone.innerHTML = departuresBody.innerHTML;
-        const totalHeight = scrollInner.scrollHeight / 2;
-        const speed = 25;
-        const duration = totalHeight / speed;
-        scrollInner.style.animation = `scroll ${duration}s linear infinite`;
+        if(!scrollInner.dataset.scrolling) setupScroll();
+
     } catch(err){ console.error(err); }
 }
 
-const styleSheet = document.createElement("style");
-styleSheet.innerHTML=`@keyframes scroll{0%{transform:translateY(0);}100%{transform:translateY(-50%);}}`;
-document.head.appendChild(styleSheet);
+function setupScroll(){
+    if(departuresBody.children.length === 0) return;
+    departuresClone.innerHTML = departuresBody.innerHTML;
+    const scrollHeight = scrollInner.scrollHeight/2;
+    const speed = 25; // slower scroll for TV readability
+    const duration = scrollHeight / speed;
+    scrollInner.style.animation = `scroll ${duration}s linear infinite`;
+    scrollInner.dataset.scrolling = "true";
+}
 
 fetchDepartures();
 setInterval(fetchDepartures,600000);
@@ -255,7 +312,3 @@ setInterval(fetchDepartures,600000);
 
 </body>
 </html>
-
-
-
-
