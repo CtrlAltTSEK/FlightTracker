@@ -85,8 +85,14 @@ th.destination, td.destination {
 .status-cancelled { color:#ff0000; font-weight:bold; animation: blink 0.8s step-start infinite; }
 
 @keyframes blink { 0%,50%,100% {opacity:1;} 25%,75% {opacity:0;} }
-#scroll-body { flex:1; overflow:hidden; position:relative; }
-#scroll-inner { display:inline-block; }
+#scroll-body { 
+    flex:1; 
+    overflow:hidden; 
+    position:relative; 
+}
+#scroll-inner { 
+    display:block;   /* important: natural stacked height */
+}
 
 @keyframes scroll { 0% { transform:translateY(0); } 100% { transform:translateY(-50%); } }
 
@@ -298,10 +304,13 @@ async function fetchDepartures(){
 
 function setupScroll(){
     if(departuresBody.children.length === 0) return;
+
     departuresClone.innerHTML = departuresBody.innerHTML;
-    const scrollHeight = scrollInner.scrollHeight/2;
-    const speed = 25; // slower scroll for TV readability
-    const duration = scrollHeight / speed;
+
+    const bodyHeight = departuresBody.offsetHeight;
+    const speed = 25; // px/sec for TV readability
+    const duration = bodyHeight / speed;
+
     scrollInner.style.animation = `scroll ${duration}s linear infinite`;
     scrollInner.dataset.scrolling = "true";
 }
@@ -312,3 +321,4 @@ setInterval(fetchDepartures,600000);
 
 </body>
 </html>
+
